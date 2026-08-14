@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - /bin/cp -f index.html $HOME/keepenviro.ro/
+    - /bin/cp -Rf css $HOME/keepenviro.ro/
+    - /bin/cp -Rf js $HOME/keepenviro.ro/
