@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - /bin/cp -f index.html $HOME/keepenviro.ro/
-    - /bin/cp -f .htaccess $HOME/keepenviro.ro/
-    - /bin/cp -Rf css $HOME/keepenviro.ro/
-    - /bin/cp -Rf js $HOME/keepenviro.ro/
+    - /bin/cp -f index.html $HOME/public_html/
+    - /bin/cp -f .htaccess $HOME/public_html/
+    - /bin/cp -Rf css $HOME/public_html/
+    - /bin/cp -Rf js $HOME/public_html/
