@@ -1,0 +1,90 @@
+# Site-ul pe serverul Hetzner al Elviriei (2.29.0.26), lângă aplicație, servit de
+# același Caddy. Repo-ul ăsta urcă doar fișierele lui, în /srv/site-uri/keepenviro.ro:
+#   public/     ← index.html, css/, js/ (Caddy le citește direct, fără reload)
+#   Caddyfile   ← blocul de site, inclus de Caddyfile-ul Elviriei prin `import`
+#
+# Cheia de deploy e a repo-ului ăstuia, nu a Elviriei, și pe server e îngrădită în
+# authorized_keys la `rrsync -wo /srv/site-uri/keepenviro.ro`: poate scrie doar acolo.
+#
+# Variabilele de repo care pornesc pașii:
+#   HETZNER_DEPLOY_ACTIV=true  fișierele site-ului se urcă la fiecare push pe main
+#   HETZNER_CADDY_ACTIV=true   se urcă și Caddyfile-ul (doar după ce DNS-ul trimite
+#                              la server: altfel Caddy cere certificatul degeaba)
+# Secretele: HETZNER_SSH_KEY, HETZNER_KNOWN_HOSTS, HETZNER_HOST (elviria@2.29.0.26).
+name: Deploy Hetzner
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hetzner
+  cancel-in-progress: false
+
+jobs:
+  valideaza:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Exact cum îl vede Caddy-ul de pe server: un Caddyfile principal care îl
+      # include prin glob. Un fișier care nu trece aici nu ajunge pe server.
+      - name: Caddyfile valid, inclus ca pe server
+        run: |
+          mkdir -p "$RUNNER_TEMP/site-uri/keepenviro.ro"
+          cp deploy/hetzner/Caddyfile "$RUNNER_TEMP/site-uri/keepenviro.ro/Caddyfile"
+          printf '{\n\temail test@example.com\n}\n\nimport /srv/site-uri/*/Caddyfile\n' > "$RUNNER_TEMP/principal.caddy"
+          docker run --rm \
+            -v "$RUNNER_TEMP/site-uri:/srv/site-uri:ro" \
+            -v "$RUNNER_TEMP/principal.caddy:/etc/caddy/Caddyfile:ro" \
+            caddy:2-alpine sh -c '
+              caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile &&
+              caddy adapt --adapter caddyfile --config /etc/caddy/Caddyfile > /tmp/c.json &&
+              grep -q "\"keepenviro.ro\"" /tmp/c.json &&
+              grep -q "\"www.keepenviro.ro\"" /tmp/c.json &&
+              echo "Ambele site-uri sunt în configurație."'
+
+  deploy:
+    needs: valideaza
+    if: vars.HETZNER_DEPLOY_ACTIV == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cheia SSH și amprenta serverului
+        env:
+          CHEIE: ${{ secrets.HETZNER_SSH_KEY }}
+          AMPRENTE: ${{ secrets.HETZNER_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$CHEIE" > ~/.ssh/keepenviro-deploy
+          printf '%s\n' "$AMPRENTE" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/keepenviro-deploy ~/.ssh/known_hosts
+
+      # Căile sunt relative la /srv/site-uri/keepenviro.ro (rădăcina lui rrsync).
+      - name: Fișierele site-ului
+        env:
+          HOST: ${{ secrets.HETZNER_HOST }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/public"
+          cp -r index.html css js "$RUNNER_TEMP/public/"
+          rsync -rlz --delete --chmod=D755,F644 \
+            -e 'ssh -i ~/.ssh/keepenviro-deploy -o StrictHostKeyChecking=yes' \
+            "$RUNNER_TEMP/public/" "$HOST:public/"
+
+      - name: Caddyfile-ul site-ului
+        if: vars.HETZNER_CADDY_ACTIV == 'true'
+        env:
+          HOST: ${{ secrets.HETZNER_HOST }}
+        run: |
+          rsync -z --chmod=F644 \
+            -e 'ssh -i ~/.ssh/keepenviro-deploy -o StrictHostKeyChecking=yes' \
+            deploy/hetzner/Caddyfile "$HOST:Caddyfile"
+          echo "::notice::Caddyfile urcat. Intră în vigoare la următorul 'caddy reload' din containerul web."
+
+      - name: Verificare din afară
+        if: vars.HETZNER_CADDY_ACTIV == 'true'
+        run: |
+          sleep 5
+          curl -fsS --max-time 20 https://keepenviro.ro/ | grep -q 'KEEP ENVIRO SRL'

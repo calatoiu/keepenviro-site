@@ -1,0 +1,33 @@
+# keepenviro.ro pe serverul Hetzner (2.29.0.26), servit de Caddy-ul stivei Elviria.
+#
+# Pe server fișierul stă în /srv/site-uri/keepenviro.ro/Caddyfile, iar Caddyfile-ul
+# Elviriei îl include cu `import /srv/site-uri/*/Caddyfile`. Un fișier stricat aici
+# oprește tot Caddy-ul la următoarea pornire, deci și Elviria: CI-ul îl validează
+# înainte să-l urce, iar pe server intră în vigoare abia la `caddy reload`.
+
+keepenviro.ro {
+	root * /srv/site-uri/keepenviro.ro/public
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		# Fără includeSubDomains: mail., ftp., cpanel. și celelalte rămân pe cPanel.
+		Strict-Transport-Security "max-age=31536000"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		-Server
+	}
+
+	# Numele fișierelor nu poartă hash, deci cache scurt.
+	@static path /css/* /js/*
+	header @static Cache-Control "public, max-age=3600"
+
+	file_server
+	log
+}
+
+www.keepenviro.ro {
+	redir https://keepenviro.ro{uri} permanent
+}
