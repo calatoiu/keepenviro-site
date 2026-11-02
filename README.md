@@ -10,7 +10,7 @@ Site static (HTML/CSS/JS), fără build. Publicare pe hosting (cPanel / Cyber_Fo
    document root-ul domeniului principal al contului. Până pe 2026-10-07 keepenviro.ro a
    fost addon, cu document root-ul `~/keepenviro.ro/`; de atunci e domeniul principal.
 
-## Mutarea pe serverul Hetzner (în pregătire din 2026-11-02)
+## Mutarea pe serverul Hetzner (în pregătire din 2026-11-02; pașii 2–4 făcuți, pasul 1 scris în Elviria, încă nepus pe server)
 
 Ținta: serverul Hetzner al Elviriei (`2.29.0.26`, Docker), unde porturile 80/443 sunt
 ale Caddy-ului din stiva Elviriei. Site-ul nu-și aduce propriul server web: Caddyfile-ul
@@ -44,9 +44,15 @@ Până la cutover, cPanel rămâne sursa site-ului (pașii de mai sus); `.htacce
    la 14400 la 300; `mail.` și `ftp.keepenviro.ro`, azi CNAME spre `keepenviro.ro`, devin
    A spre `176.223.121.69`, ca să rămână pe cPanel. MX-ul (Microsoft 365), SPF-ul,
    `autodiscover`, `elviria.` și celelalte nu se ating.
-5. **Cutover**: A-ul `keepenviro.ro` spre `2.29.0.26` (`www` e CNAME, îl urmează);
-   `HETZNER_CADDY_ACTIV=true` și un deploy; `caddy reload` în `web`
-   (`docker compose exec web caddy reload --config /etc/caddy/Caddyfile`). Caddy ia
-   certificatul la prima încercare, fiindcă DNS-ul trimite deja la el.
+5. **Cutover**, în ordinea asta: verifici că `web` din `/srv/elviria` are importul și
+   vede `public/index.html`; `HETZNER_CADDY_ACTIV=true` și un deploy (Caddyfile-ul ajunge
+   pe server, inactiv); A-ul `keepenviro.ro` spre `2.29.0.26` (`www` e CNAME, îl
+   urmează); `docker compose exec -T web caddy reload --config /etc/caddy/Caddyfile
+   --force` în `/srv/elviria`. Fără `--force`, un reload cu aceeași configurație e
+   ignorat — iar dacă `web` a repornit între timp, Caddy are deja blocul, cu încercările
+   de certificat eșuate în backoff. Caddy ia certificatul imediat, fiindcă DNS-ul trimite
+   deja la el. Revenirea: A-ul înapoi la `176.223.121.69`; cPanel are încă site-ul.
+   **Orice schimbare ulterioară a `deploy/hetzner/Caddyfile` cere același reload**;
+   `public/` nu.
 6. **După**: copia de pe cPanel rămâne două săptămâni, pentru rezolvitoarele întârziate;
    apoi se scot `.htaccess`, `.cpanel.yml` și repo-ul din Git Version Control.
