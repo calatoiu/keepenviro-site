@@ -3,7 +3,7 @@
 Site de prezentare pentru **KEEP ENVIRO SRL** — servicii în domeniul protecției mediului, Constanța.
 
 Site static (HTML/CSS/JS), fără build. **Din 2026-11-19 stă pe serverul Hetzner al Elviriei**
-(`2.29.0.26`, Docker). Site-ul nu-și aduce propriul server web: îl servește Caddy-ul din stiva
+(`91.98.142.166`, la Nürnberg, Docker; în prima zi, la Helsinki, pe `2.29.0.26`). Site-ul nu-și aduce propriul server web: îl servește Caddy-ul din stiva
 Elviriei, care include blocul lui prin `import /srv/site-uri/*/Caddyfile`.
 
 ## Publicarea
@@ -34,7 +34,7 @@ Cheia de deploy e a repo-ului ăstuia, nu a Elviriei, iar pe server e îngrădit
 `~elviria/.ssh/authorized_keys` la `rrsync -wo /srv/site-uri/keepenviro.ro`: poate scrie doar
 acolo. Ce folosește workflow-ul, în Settings → Secrets and variables → Actions:
 
-- secretele `HETZNER_SSH_KEY`, `HETZNER_KNOWN_HOSTS`, `HETZNER_HOST` (`elviria@2.29.0.26`);
+- secretele `HETZNER_SSH_KEY`, `HETZNER_KNOWN_HOSTS`, `HETZNER_HOST` (`elviria@91.98.142.166`);
 - variabilele `HETZNER_DEPLOY_ACTIV=true` (fișierele) și `HETZNER_CADDY_ACTIV=true` (Caddyfile-ul).
 
 ## DNS
@@ -43,7 +43,7 @@ Zona `keepenviro.ro` e încă la cyber_folks (cPanel → Zone Editor). Cum arat�
 
 | Nume | Înregistrare | Unde duce |
 |---|---|---|
-| `keepenviro.ro` | A, TTL 300 | `2.29.0.26` (Hetzner) |
+| `keepenviro.ro` | A, TTL 300 | `91.98.142.166` (Hetzner, Nürnberg) |
 | `www.keepenviro.ro` | CNAME | `keepenviro.ro`, deci tot Hetzner; Caddy îl trimite la `keepenviro.ro` (301) |
 | `mail.`, `ftp.keepenviro.ro` | A | `176.223.121.69` (cPanel) |
 | MX | — | Microsoft 365 (`keepenviro-ro.mail.protection.outlook.com`) |
@@ -73,6 +73,10 @@ Hetzner. Rămâne două săptămâni, pentru rezolvitoarele DNS întârziate și
 4. **DNS, cu ore înainte:** TTL-ul A-ului `keepenviro.ro` coborât la 300; `mail.` și `ftp.`, până
    atunci CNAME spre `keepenviro.ro`, făcute A spre cPanel, ca să rămână acolo.
 5. **Mutarea, pe 2026-11-19, ~11:15:** `HETZNER_CADDY_ACTIV=true` și un deploy (Caddyfile-ul pe
-   server, încă inactiv); A-ul `keepenviro.ro` spre `2.29.0.26` (`www` e CNAME, îl urmează);
+   server, încă inactiv); A-ul `keepenviro.ro` spre `2.29.0.26`, serverul de atunci, de la Helsinki (`www` e CNAME, îl urmează);
    apoi reîncărcarea cu `--force` de mai sus. Certificatele pentru `keepenviro.ro` și `www` au
    venit în 6 secunde, fiindcă DNS-ul trimitea deja la server.
+6. **Serverul s-a mutat la Nürnberg în aceeași seară** (pentru latență, din repo-ul Elviriei):
+   fișierele și Caddyfile-ul site-ului au trecut cu el, A-ul `keepenviro.ro` duce de atunci la
+   `91.98.142.166`, iar secretele `HETZNER_HOST` și `HETZNER_KNOWN_HOSTS` de aici s-au schimbat;
+   primul deploy spre serverul nou a trecut pe 2026-11-19, la 21:51.

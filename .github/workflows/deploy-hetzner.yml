@@ -1,4 +1,4 @@
-# Site-ul pe serverul Hetzner al Elviriei (2.29.0.26), lângă aplicație, servit de
+# Site-ul pe serverul Hetzner al Elviriei (91.98.142.166, Nürnberg), lângă aplicație, servit de
 # același Caddy. Repo-ul ăsta urcă doar fișierele lui, în /srv/site-uri/keepenviro.ro:
 #   public/     ← index.html, css/, js/ (Caddy le citește direct, fără reload)
 #   Caddyfile   ← blocul de site, inclus de Caddyfile-ul Elviriei prin `import`
@@ -10,7 +10,7 @@
 #   HETZNER_DEPLOY_ACTIV=true  fișierele site-ului se urcă la fiecare push pe main
 #   HETZNER_CADDY_ACTIV=true   se urcă și Caddyfile-ul (doar după ce DNS-ul trimite
 #                              la server: altfel Caddy cere certificatul degeaba)
-# Secretele: HETZNER_SSH_KEY, HETZNER_KNOWN_HOSTS, HETZNER_HOST (elviria@2.29.0.26).
+# Secretele: HETZNER_SSH_KEY, HETZNER_KNOWN_HOSTS, HETZNER_HOST (elviria@91.98.142.166).
 name: Deploy Hetzner
 
 on:

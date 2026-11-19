@@ -1,4 +1,4 @@
-# keepenviro.ro pe serverul Hetzner (2.29.0.26), servit de Caddy-ul stivei Elviria.
+# keepenviro.ro pe serverul Hetzner (91.98.142.166, Nürnberg), servit de Caddy-ul stivei Elviria.
 #
 # Pe server fișierul stă în /srv/site-uri/keepenviro.ro/Caddyfile, iar Caddyfile-ul
 # Elviriei îl include cu `import /srv/site-uri/*/Caddyfile`. Un fișier stricat aici
